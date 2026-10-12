@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Performer DB</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Performer DB</h1>
+    <div class="search-bar">
+      <input id="search" type="search" placeholder="Search performers..." autocomplete="off" />
+    </div>
+    <button id="toggleFilters" class="filter-toggle">Filters</button>
+  </header>
+
+  <aside id="filters" class="filters hidden">
+    <div class="filter-group">
+      <label>Gender</label>
+      <select id="f_gender" multiple></select>
+    </div>
+    <div class="filter-group">
+      <label>Cup Size</label>
+      <select id="f_cup_size" multiple></select>
+    </div>
+    <div class="filter-group">
+      <label>Breast Type</label>
+      <select id="f_breast_type" multiple></select>
+    </div>
+    <div class="filter-group">
+      <label>Ethnicity</label>
+      <select id="f_ethnicity" multiple></select>
+    </div>
+    <div class="filter-group">
+      <label>Country</label>
+      <select id="f_country" multiple></select>
+    </div>
+    <div class="filter-group">
+      <label>Hair Color</label>
+      <select id="f_hair_color" multiple></select>
+    </div>
+    <div class="filter-group">
+      <label>Rating</label>
+      <select id="f_rating" multiple>
+        <option>S</option><option>A</option><option>B</option><option>C</option>
+        <option>D</option><option>F</option><option>U</option><option>L</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Height (cm)</label>
+      <div class="range">
+        <input id="f_minHeight" type="number" placeholder="min" />
+        <input id="f_maxHeight" type="number" placeholder="max" />
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Career Start Year</label>
+      <div class="range">
+        <input id="f_minYear" type="number" placeholder="min" />
+        <input id="f_maxYear" type="number" placeholder="max" />
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Waist:Hip Ratio</label>
+      <div class="range">
+        <input id="f_minWhr" type="number" step="0.01" placeholder="min" />
+        <input id="f_maxWhr" type="number" step="0.01" placeholder="max" />
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Min Scenes</label>
+      <input id="f_minScenes" type="number" placeholder="0" />
+    </div>
+    <button id="clearFilters">Clear Filters</button>
+  </aside>
+
+  <main id="app">
+    <div id="results" class="grid"></div>
+    <div id="pagination" class="pagination"></div>
+  </main>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close" id="closeModal">&times;</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/performer.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
