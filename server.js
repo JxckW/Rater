@@ -117,7 +117,7 @@ app.get('/api/performers', async (req, res) => {
 
     // Rating filter
     const ratingFilter = rating
-      ? `AND COALESCE(r.rating, 'U') = ANY($${params.push(rating.split(',').map(s => s.trim()))})`
+      ? `AND COALESCE(r.rating, 'N/A') = ANY($${params.push(rating.split(',').map(s => s.trim()))})`
       : '';
 
     const whereSql = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -128,7 +128,7 @@ app.get('/api/performers', async (req, res) => {
              p.height, p.cup_size, p.breast_type, p.ethnicity,
              p.country, p.hair_color, p.waist_size, p.hip_size,
              p.career_start_year,
-             COALESCE(r.rating, 'U') AS rating
+             COALESCE(r.rating, 'N/A') AS rating
       FROM all_performers p
       LEFT JOIN LATERAL (
         SELECT rating FROM performer_ratings
@@ -179,7 +179,7 @@ app.get('/api/performers/:id', async (req, res) => {
     if (cached) return res.json(cached);
 
     const { rows } = await performerPool.query(
-      `SELECT p.*, COALESCE(r.rating,'U') AS rating, r.updated_at AS rating_updated
+      `SELECT p.*, COALESCE(r.rating,'N/A') AS rating, r.updated_at AS rating_updated
        FROM all_performers p
        LEFT JOIN LATERAL (
          SELECT rating, updated_at FROM performer_ratings
@@ -335,7 +335,7 @@ function formatPerformer(p) {
     hip,
     whr,
     career_start_year: toInt(p.career_start_year),
-    rating: p.rating || 'U',
+    rating: p.rating || 'N/A',
     rating_updated: p.rating_updated || null,
   };
 }
