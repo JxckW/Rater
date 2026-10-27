@@ -1,14 +1,24 @@
 // Modal rendering for performer detail
 const RATINGS = ['S','A','B','C','D','F','U','L','N/A'];
 
+let savedScrollY = 0;
+
 function openModal() {
+  savedScrollY = window.scrollY;
   document.getElementById('modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+  document.body.style.paddingRight =
+    (window.innerWidth - document.documentElement.clientWidth) + 'px';
 }
+
 function closeModal() {
   document.getElementById('modal').classList.add('hidden');
-  document.body.style.overflow = '';
   document.getElementById('modalBody').innerHTML = '';
+
+  document.body.style.overflow = '';
+  document.body.style.paddingRight = '';
+  window.scrollTo(0, savedScrollY);
+
   if (location.hash.startsWith('#performer/')) {
     history.replaceState('', document.title, location.pathname + location.search);
   }
@@ -18,7 +28,6 @@ async function showPerformer(id, pushHistory = true) {
   const body = document.getElementById('modalBody');
   body.innerHTML = '<div class="loading">Loading...</div>';
   openModal();
-  window.scrollTo(0, 0);
 
   if (pushHistory && location.hash !== `#performer/${id}`) {
     history.pushState({ performerId: id }, '', `#performer/${id}`);
@@ -33,19 +42,6 @@ async function showPerformer(id, pushHistory = true) {
     body.innerHTML = `<div class="empty">${err.message}</div>`;
   }
 }
-
-// Handle back/forward + initial load
-window.addEventListener('popstate', () => {
-  const m = location.hash.match(/^#performer\/(.+)$/);
-  if (m) showPerformer(decodeURIComponent(m[1]), false);
-  else closeModal();
-});
-
-// On page load, if URL has a performer hash, open it
-window.addEventListener('DOMContentLoaded', () => {
-  const m = location.hash.match(/^#performer\/(.+)$/);
-  if (m) showPerformer(decodeURIComponent(m[1]), false);
-});
 
 function renderPerformer(p) {
   const imgs = p.images.length
@@ -66,15 +62,16 @@ function renderPerformer(p) {
     ['Scenes', p.scene_count ?? '—'],
   ].map(([l, v]) => `<div class="bio-item"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
 
+  const currentRating = p.rating ?? 'N/A';
   const ratingBtns = RATINGS.map(r =>
-    `<button data-rating="${r}" class="${p.rating === r ? 'active' : ''}">${r}</button>`
+    `<button data-rating="${r}" class="${currentRating === r ? 'active' : ''}">${r}</button>`
   ).join('');
 
   return `
     <div class="performer-header">
       <div class="performer-gallery">${imgs}</div>
       <div class="performer-info">
-        <h2>${p.name}</h2>
+        <h2>${escapeHtml(p.name)}</h2>
         <div class="bio-grid">${bio}</div>
         <div>
           <div class="section-title" style="margin-top:0">Rating</div>
@@ -97,14 +94,16 @@ function attachRatingHandlers(p) {
     try {
       await API.setRating(p.id, rating);
       picker.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
-      p.rating = rating;
-      // Refresh card in results grid without full refetch
+      p.rating = rating === 'N/A' ? null : rating;
+
+      // Update the card badge in the results grid without a full refetch
       const card = document.querySelector(`.card[data-id="${p.id}"]`);
       if (card) {
         const badge = card.querySelector('.rating-badge');
         if (badge) {
-          badge.className = `rating-badge rating-${rating}`;
-          badge.textContent = rating;
+          const shown = p.rating ?? 'N/A';
+          badge.className = `rating-badge rating-${shown.replace('/', '\\/')}`;
+          badge.textContent = shown;
         }
       }
     } catch (err) {
@@ -156,7 +155,15 @@ function renderScenesPagination(name, current, total) {
     b.textContent = label;
     if (active) b.classList.add('active');
     if (disabled) b.disabled = true;
-    else b.onclick = () => loadScenes(name, page);
+    else b.onclick = () => {
+      loadScenes(name, page);
+      // Scroll to the top of the scenes section
+      const scenesSection = document.getElementById('scenesContainer');
+      if (scenesSection) {
+        const top = scenesSection.getBoundingClientRect().top + window.scrollY - 20;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    };
     return b;
   };
   frag.appendChild(mk('« Prev', current - 1, false, current === 1));
@@ -169,9 +176,24 @@ function renderScenesPagination(name, current, total) {
 }
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
 }
+
 function formatDate(d) {
   const dt = new Date(d);
   return isNaN(dt) ? d : dt.toLocaleDateString();
 }
+
+// Handle back/forward + initial load
+window.addEventListener('popstate', () => {
+  const m = location.hash.match(/^#performer\/(.+)$/);
+  if (m) showPerformer(decodeURIComponent(m[1]), false);
+  else closeModal();
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  const m = location.hash.match(/^#performer\/(.+)$/);
+  if (m) showPerformer(decodeURIComponent(m[1]), false);
+});
